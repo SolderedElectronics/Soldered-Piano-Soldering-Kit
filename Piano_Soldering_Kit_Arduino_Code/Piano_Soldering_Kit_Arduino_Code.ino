@@ -1,4 +1,6 @@
-// Include a library for the capacitive touchpads
+// This requires the CapacitiveSensor library to be installed
+// https://github.com/PaulStoffregen/CapacitiveSensor
+// Include the library
 #include "CapacitiveSensor.h"
 
 // Include a file that contains frequencies for each note
@@ -22,12 +24,14 @@
 // Pointers for each key object
 CapacitiveSensor *keys[NUM_KEYS];
 
+// Times when each key is pressed (for detecting which is last pressed)
+uint64_t timePressed[NUM_KEYS];
+
 // Pins for piano keys
 const uint8_t keyPins[] = {A3, 0, 1, 2, 3, 4, A5, A4, 5, 6, 7, 8};
 
 // Common send pin for all keys
 const uint8_t sendPin = 9;
-
 
 void setup()
 {
@@ -42,7 +46,6 @@ void setup()
     }
 }
 
-
 void loop()
 {
     // Get selected octave
@@ -54,13 +57,23 @@ void loop()
         // Check if the key is pressed
         if (keys[i]->capacitiveSensor(CAPACITIVE_SENSOR_SENSITIVITY) > KEY_PRESS_THRESHOLD)
         {
-            // Play the tone of the pressed key
-            tone(PWM_OUT_PIN, tones[currentOctave][i]);
-
-            // Because the tone function cannot reproduce more than 1 tone at the same time, no need to check other keys
-            break;
+            // Remember the time when the key is pressed
+            timePressed[i] = millis();
         }
     }
+
+    // Find the last pressed key (the biggest time), and play this tone
+    int lastPressedIndex = 0;
+    for (int i = 1; i < NUM_KEYS; i++)
+    {
+        if (timePressed[i] > timePressed[lastPressedIndex])
+        {
+            lastPressedIndex = i;
+        }
+    }
+
+    // Play the tone of the last pressed key
+    tone(PWM_OUT_PIN, tones[currentOctave][lastPressedIndex]);
 
     // Stop the tone only if the all keys are released
     bool allKeysReleased = 1;
@@ -72,7 +85,7 @@ void loop()
         if (keys[i]->capacitiveSensor(CAPACITIVE_SENSOR_SENSITIVITY) > KEY_PRESS_THRESHOLD)
         {
             // If the key is pressed, set the flag to 0, and don't check next
-            allKeysReleased = 0;         
+            allKeysReleased = 0;
             break;
         }
     }
@@ -83,6 +96,8 @@ void loop()
         // Stop the tone
         noTone(PWM_OUT_PIN);
     }
+
+    lastPressedKey = currentPressedKey;
 }
 
 // Read the current octave from the switch and return the selected octave
