@@ -4,7 +4,6 @@
 | :------------------------------------------------------------------------------------:     |
 |                      [Piano Soldering Kit](https://www.solde.red/333181)                   |
 
-OPIS PROIZVODA + LINK NA [easyC ecosystem](https://www.soldered.com/en/easyC).
 
 ### Repository Contents
 
